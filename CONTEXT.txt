@@ -1,0 +1,44 @@
+Project: Python implementation of the ATM Data Exchange Interface (DXI) standard.
+
+Source Specification: The ATM Forum Technical Committee - Data Exchange Interface (DXI) Specification, v1.0, af-dxi-0014.000, August, 1993.
+
+Code Structure:
+*   The implementation is now split into multiple Python files:
+    *   `dxi_constants.py`: Enums and constants.
+    *   `dxi_utils.py`: Helper functions (CRC, DFA mapping, LMI encoding/decoding helpers).
+    *   `dxi_frame.py`: `DXIFrame` class definition.
+    *   `dxi_lmi.py`: `LMIObject` and `LMIPDU` class definitions (including subclasses).
+    *   `dxi_simulation.py`: `DTE` and `DCE` simulation classes.
+    *   `main.py`: Example usage script.
+
+Current State:
+*   Core classes (`DXIFrame`, `LMIPDU`, `DTE`, `DCE`) are defined in separate modules.
+*   Handles basic structure for DXI Modes 1a, 1b, and 2.
+*   Includes DXI Frame header packing/unpacking based on spec figures.
+*   Integrates `crcmod` for CRC-16 (Mode 1) and CRC-32 (Mode 2) calculation and validation.
+*   Implements DFA <-> VPI/VCI mapping logic based on Annex A.
+*   Integrated `pyasn1` library for ASN.1 handling.
+*   Implemented LMI PDU **Encoding**: `LMIPDU.pack` methods utilize helper functions in `dxi_utils.py` to correctly encode Object ID Length (BER), Object IDs (DXI custom 7-bit format), and Object Values (BER TLV using `pyasn1`). Trap PDU structure handled.
+*   Attempted LMI PDU **Decoding**: `LMIPDU.unpack` and helper methods (`_static_unpack_objects`, etc.) exist but require **significant debugging**, particularly regarding byte stream management during decoding of variable-length fields.
+*   Simulates basic DTE <-> DCE interaction for data frames and LMI Get requests/responses using the new encoding mechanisms. Example usage in `main.py`.
+*   Includes basic simulated MIB lookup in DCE for LMI responses.
+
+Key Simplifications/Omissions:
+*   **LMI Decoding:** The LMI PDU *unpacking* logic, especially managing the byte stream position after decoding variable-length ASN.1/BER fields, is **not fully functional and requires debugging**.
+*   **AAL Processing:** Actual ATM Adaptation Layer (AAL3/4, AAL5) CPCS/SAR processing is **NOT** implemented. Payload handling is simplified.
+*   **MIB/Management:** MIB implementation is basic (simple dictionary). MIB-centric IfIndex proxying (Section 4) is not implemented. LMI GetNext/Set logic is missing. Specific MIB tables from Annex B are not parsed or fully implemented.
+*   **Framing:** HDLC-like bit stuffing/destuffing is not included. Header validation could be stricter.
+*   **Physical Layer:** All physical layer aspects (V.35, HSSI, clocking) are omitted.
+*   **Error Handling:** Detailed LMI error status generation (`tooBig`, `badValue`) is basic.
+
+Next Steps:
+*   Refer to `TODO.md` for a detailed list of remaining tasks.
+*   The **immediate priority is debugging the LMI PDU unpacking logic** (`_static_unpack_objects` in `dxi_lmi.py`, stream handling in helpers in `dxi_utils.py`).
+*   Implementing the AAL processing logic specific to each DXI mode and AAL type is the next major functional task.
+*   Implementing MIB GetNext/Set logic in the DCE simulation.
+
+Dependencies:
+*   `crcmod` (`pip install crcmod`)
+*   `pyasn1` (`pip install pyasn1`)
+
+Goal: To create a structural and functional simulation of the ATM DXI protocol based on the v1.0 specification for educational or testing purposes, organized into Python modules. It is not intended for production hardware interfacing without significant additions and debugging.
